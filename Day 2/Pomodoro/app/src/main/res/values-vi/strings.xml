@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pô mô đô rô</string>
+    <string name="action_settings">Cài đặt</string>
+    <string name="password">Mật khẩu</string>
+    <string name="register">Đăng ký</string>
+    <string name="user_name">Tên đăng nhập</string>
+    <string name="login">Đăng nhập</string>
+</resources>

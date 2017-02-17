@@ -1,0 +1,40 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.tranh.pomodoro.fragments.TaskDetailFragment">
+
+    <!-- TODO: Update blank fragment layout -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/ed_nametask"
+            android:layout_width="match_parent"
+            android:hint="@string/name"
+            android:imeOptions="actionNext"
+            android:textColorHint="@color/colorPrimary"
+            android:layout_height="wrap_content" />
+        </android.support.design.widget.TextInputLayout>
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/ed_pertask"
+            android:layout_width="match_parent"
+            android:imeOptions="actionDone"
+            android:inputType="numberDecimal"
+            android:textColorHint="@color/colorPrimary"
+            android:hint="@string/payment_per_secs"
+            android:layout_height="wrap_content" />
+        </android.support.design.widget.TextInputLayout>
+    <include
+        layout="@layout/activity_color" ></include>
+    </LinearLayout>
+
+
+</FrameLayout>

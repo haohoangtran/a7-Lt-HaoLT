@@ -1,0 +1,19 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/album_item"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:orientation="vertical" >
+    <View
+        android:id="@+id/v_color"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/shape_task_color"
+        android:scaleType="center"/>
+    <android.support.v7.widget.AppCompatCheckBox
+        android:id="@+id/cb_color"
+        android:button="@drawable/cb_select"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
+</FrameLayout>
