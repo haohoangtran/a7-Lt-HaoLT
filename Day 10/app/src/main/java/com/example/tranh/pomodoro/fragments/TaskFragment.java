@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.tranh.pomodoro.R;
 import com.example.tranh.pomodoro.activities.TaskActivity;
@@ -25,6 +26,7 @@ import com.example.tranh.pomodoro.database.models.Task;
 import com.example.tranh.pomodoro.networks.NetContext;
 import com.example.tranh.pomodoro.networks.services.TaskActionService;
 import com.example.tranh.pomodoro.utils.TaskActionEnum;
+import com.example.tranh.pomodoro.utils.Util;
 
 import java.util.List;
 
@@ -39,7 +41,8 @@ import retrofit2.Response;
  * A simple {@link Fragment} subclass.
  */
 public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick{
-
+    private int count;
+    private final int  MAX_REQUEST=5;
     private static final String TAG =TaskFragment.class.toString() ;
     @BindView(R.id.rv_task)
     RecyclerView rv_task;
@@ -47,7 +50,7 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick{
     private TaskAdapter taskAdapter;
 
     public TaskFragment() {
-        // Required empty public constructor
+
     }
     public void getAllTask() {
         DbContext.instance.resetTaskList();
@@ -62,9 +65,7 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick{
                     }
                     taskAdapter.notifyDataSetChanged();
                 }
-
             }
-
             @Override
             public void onFailure(Call<List<Task>> call, Throwable t) {
                 Log.e(TAG, String.format("onFailure: %s", t.toString()) );
@@ -74,6 +75,7 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick{
 
 
     }
+
 
     @Override
     public void onAttach(Context context) {
@@ -87,6 +89,7 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick{
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_task, container, false);
         setupUI(view);
+        Log.e(TAG, "onCreateView: Phịch");
         return view;
     }
 
@@ -114,12 +117,13 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick{
         taskAdapter.setTaskItemClickDelete(new TaskAdapter.TaskItemClickDelete() {
             @Override
             public void onItemClick(final Task task) {
+                count=0;
                 Log.e(TAG, String.format("onItemClick: 1 %s", task.toString()) );
                 new AlertDialog.Builder(getContext())
                         .setTitle("Delete entry")
                         .setMessage("Are you sure you want to delete this entry?")
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
+                            public void onClick(DialogInterface dialog, final int which) {
                                TaskActionService deleteTask=NetContext.instance.create(TaskActionService.class);
                                 deleteTask.deleteTask(task.getId()).enqueue(new Callback<Void>() {
                                     @Override
@@ -131,7 +135,10 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick{
 
                                     @Override
                                     public void onFailure(Call<Void> call, Throwable t) {
-                                        Log.e(TAG, String.format("onFailure: Lỗi %s", t.toString()) );
+                                        while (count++<MAX_REQUEST) {
+                                            Toast.makeText(getContext(), String.format("Lỗi! Thử lại lần %d", count), Toast.LENGTH_SHORT).show();
+                                            Util.enqueueWithRetry(call, this);
+                                        }
                                     }
                                 });
                             }

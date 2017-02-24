@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.tranh.pomodoro.R;
 import com.example.tranh.pomodoro.activities.TaskActivity;
@@ -49,6 +51,7 @@ public class TaskDetailFragment extends Fragment {
     EditText et_nameTask;
     private String tittle;
     public Task task;
+    int count;
 
     public TaskActionEnum getTaskAction() {
         return taskAction;
@@ -150,16 +153,20 @@ public class TaskDetailFragment extends Fragment {
                         public void onResponse(Call<Task> call, Response<Task> response) {
                             Log.e(TAG, String.format("onResponse: %s", response.body().toString()) );
                         }
-
                         @Override
                         public void onFailure(Call<Task> call, Throwable t) {
                             Log.e(TAG, String.format("onFailure: %s", t.toString()) );
+                            count=0;
+                            final int MAX_REQUEST=5;
+                            while (count++<MAX_REQUEST) {
+                            //    Toast.makeText(Context.getApplicationContext(), String.format("Lỗi! Thử lại lần %d", count), Toast.LENGTH_SHORT).show();
+                                Util.enqueueWithRetry(call, this);
+                            }
                         }
                     });
-
-
                 }
                 if (taskAction == TaskActionEnum.EDIT) {
+
                     TaskActionService editTask=NetContext.instance.create(TaskActionService.class);
                     editTask.editTask(task.getId(),newTask).enqueue(new Callback<Void>() {
                         @Override
@@ -169,11 +176,18 @@ public class TaskDetailFragment extends Fragment {
 
                         @Override
                         public void onFailure(Call<Void> call, Throwable t) {
-                            Log.e(TAG, String.format("onFailure: %s", t.toString()) );
+                                Log.e(TAG, String.format("onFailure: %d %s",count, t.toString()) );
+                            final int MAX_REQUEST=5;
+                            count=0;
+                            while (count++<MAX_REQUEST) {
+                                Toast.makeText(getContext(), String.format("Lỗi! Thử lại lần %d", count), Toast.LENGTH_SHORT).show();
+                                Util.enqueueWithRetry(call, this);
+                            }
+
                         }
                     });
                 }
-                getActivity().onBackPressed();
+                getActivity().onBackPressed();// gọi onResume
             } else {
                 et_nameTask.setError(getString(R.string.name_not_empty));
             }

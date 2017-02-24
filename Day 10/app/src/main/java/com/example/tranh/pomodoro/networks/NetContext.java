@@ -2,7 +2,6 @@ package com.example.tranh.pomodoro.networks;
 
 import android.util.Log;
 
-import com.example.tranh.pomodoro.networks.services.LoginService;
 import com.example.tranh.pomodoro.settings.SharedPrefs;
 
 import java.io.IOException;
@@ -15,7 +14,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.internal.framed.Header;
 import okio.Buffer;
 import okio.BufferedSource;
 import retrofit2.Retrofit;
@@ -46,9 +44,6 @@ public class NetContext {
                 .build();
     }
 
-    public LoginService createLoginService() {
-        return retrofit.create(LoginService.class);
-    }
 
     public <T> T create(Class<T>  classz) {
         return retrofit.create(classz);
