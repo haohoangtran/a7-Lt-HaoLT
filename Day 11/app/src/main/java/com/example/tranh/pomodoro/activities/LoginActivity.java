@@ -126,7 +126,6 @@ public class LoginActivity extends AppCompatActivity {
                 if (loginResponseJSON == null) {
                     Toast.makeText(LoginActivity.this, "User or password doesn't match", Toast.LENGTH_SHORT).show();
                     pdLogin.dismiss();
-
                 } else {
                     if (response.code() == 200) {
                         checkLogin(loginResponseJSON);

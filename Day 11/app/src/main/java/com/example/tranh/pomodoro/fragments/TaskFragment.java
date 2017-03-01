@@ -1,6 +1,8 @@
 package com.example.tranh.pomodoro.fragments;
 
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -49,11 +51,14 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick,Ta
     TaskChangeListenner taskChangeListenner;
     private TaskAdapter taskAdapter;
     private  DbContext dbContext;
+    ProgressDialog dialog;
 
     public TaskFragment() {
 
     }
     public void getAllTask() {
+        dialog = ProgressDialog.show(getContext(), getString(R.string.loadding),
+                getString(R.string.please_wait), true);
         dbContext=new DbContext(getContext());
         TaskActionService getAllTaskService = NetContext.instance.create(TaskActionService.class);
         getAllTaskService.getAllTask().enqueue(new Callback<List<Task>>() {
@@ -66,11 +71,14 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick,Ta
                         dbContext.addOrUpdate(tasks.get(i));
                     }
                     taskAdapter.notifyDataSetChanged();
+                    dialog.dismiss();
                 }
             }
             @Override
             public void onFailure(Call<List<Task>> call, Throwable t) {
                 Log.e(TAG, String.format("onFailure: %s", t.toString()) );
+                Toast.makeText(getContext(), R.string.no_internet, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
             }
         });
 

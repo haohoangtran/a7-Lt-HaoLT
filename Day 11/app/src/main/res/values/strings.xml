@@ -32,4 +32,7 @@
     <string name="second">seconds</string>
     <string name="timer">Timer</string>
     <string name="name_not_empty">Name task is empty</string>
+    <string name="no_internet">No internet, try again!</string>
+    <string name="loadding">Đang tải</string>
+    <string name="please_wait">Xin chờ</string>
 </resources>

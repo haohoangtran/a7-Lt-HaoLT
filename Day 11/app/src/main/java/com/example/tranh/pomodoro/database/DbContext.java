@@ -20,28 +20,8 @@ import static android.content.ContentValues.TAG;
 public class DbContext {
     public static String[] colors = {"#F44336", "#E91E63", "#9C27B0", "#673AB7",
             "#80DEEA", "#2196F3", "#76FF03", "#009688"};
-//    private List<Task> taskList = new ArrayList<>();
-//
-//    public List<Task> allTask() {
-//        return taskList;
-//    }
-//
-//    public void addTask(Task task) {
-//        taskList.add(task);
-//    }
-//
-//    public void removeTask(Task task) {
-//        taskList.remove(task);
-//    }
-//
-//    public void resetTaskList() {
-//        taskList.clear();
-//    }
-//
-//    private DbContext() {
-//    }
 
-private Realm realm;
+    private Realm realm;
 
     public Realm getRealm() {
         return realm;
@@ -59,7 +39,7 @@ private Realm realm;
         return newTask;
     }
 
-    public void update(Task old, String color,String name,float payment) {
+    public void update(Task old, String color, String name, float payment) {
         realm.beginTransaction();
         old.setName(name);
         old.setColor(color);
@@ -72,23 +52,25 @@ private Realm realm;
         realm.copyToRealmOrUpdate(task);
         realm.commitTransaction();
     }
-    public void remove(final Task task){
+
+    public void remove(final Task task) {
         realm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
-                RealmResults<Task> result = realm.where(Task.class).equalTo("id",task.getId()).findAll();
+                RealmResults<Task> result = realm.where(Task.class).equalTo("id", task.getId()).findAll();
                 result.deleteAllFromRealm();
             }
         });
     }
 
     public List<Task> allPersions() {
-        String TAG=DbContext.class.toString();
-        List<Task> tasks=realm.where(Task.class).findAll();
-        Log.e(TAG, String.format("allPersions: %s",tasks.size() ) );
+        String TAG = DbContext.class.toString();
+        List<Task> tasks = realm.where(Task.class).findAll();
+        Log.e(TAG, String.format("allPersions: %s", tasks.size()));
         return realm.where(Task.class).findAll();
     }
-    public void removeAll(){
+
+    public void removeAll() {
         realm.beginTransaction();
         realm.delete(Task.class);
         realm.commitTransaction();
