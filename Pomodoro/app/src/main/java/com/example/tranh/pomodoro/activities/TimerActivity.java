@@ -1,5 +1,6 @@
 package com.example.tranh.pomodoro.activities;
 
+import android.app.ProgressDialog;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.CountDownTimer;
@@ -14,21 +15,30 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.tranh.pomodoro.R;
+import com.example.tranh.pomodoro.database.models.Task;
+import com.example.tranh.pomodoro.evenbus_event.TimerCommand;
+import com.example.tranh.pomodoro.evenbus_event.TimerCommandEvent;
+import com.example.tranh.pomodoro.evenbus_event.TimerTickEvent;
 import com.example.tranh.pomodoro.settings.Setting;
 import com.example.tranh.pomodoro.utils.Util;
+import com.github.lzyzsd.circleprogress.ArcProgress;
+import com.github.lzyzsd.circleprogress.DonutProgress;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class TimerActivity extends AppCompatActivity {
+    private Task task;
+
 
     private static final String TAG = TimerActivity.class.toString();
 
     final Setting SETTING = Util.getSetting();
     @BindView(R.id.pb_time)
-    ProgressBar pbTime;
-    @BindView(R.id.tv_countdown)
-    TextView tv_Countdown;
+    DonutProgress pbTime;
     @BindView(R.id.ib_pause)
     ImageButton ibPause;
     @BindView(R.id.ib_stop)
@@ -42,16 +52,25 @@ public class TimerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_timer);
+        EventBus.getDefault().register(this);
         ButterKnife.bind(this);
         getSupportActionBar().setTitle(R.string.timer);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        startTimer(SETTING.getTimeBreak() * 60 * 1000 + 1000, 1000);//cộng 1000 vì nó chạy nó bỏ mất 1s
+        pbTime.setText(getString(R.string.please_wait));
+        pbTime.setProgress(pbTime.getMax());
         addListenner();
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
                 break;
@@ -66,13 +85,14 @@ public class TimerActivity extends AppCompatActivity {
                 if (!isStop) {
                     if (!isPause) {
                         isPause = true;
-                        countDownTimer.cancel();
+                        TimerCommandEvent event = new TimerCommandEvent(TimerCommand.PAUSE_TIME);
+                        EventBus.getDefault().post(event);
                         ibPause.setImageResource(R.drawable.ic_pause_white_24px);
+
                     } else {
                         isPause = false;
-                        startTimer(timeUntilFinished, 1000);
-                        countDownTimer.start();
-
+                        TimerCommandEvent event = new TimerCommandEvent(TimerCommand.RESUME_TIME);
+                        EventBus.getDefault().post(event);
                         ibPause.setImageResource(R.drawable.ic_play_arrow_black_24px);
                     }
                 }
@@ -81,36 +101,28 @@ public class TimerActivity extends AppCompatActivity {
         ibStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                countDownTimer.onFinish();
-                countDownTimer.cancel();
-                // có nên xóa data không!
-                isStop=true;
+                TimerCommandEvent event = new TimerCommandEvent(TimerCommand.STOP_TIMER);
+                EventBus.getDefault().post(event);
+                isStop = true;
+                //stop để làm gì rồi code tiếp!
             }
         });
     }
 
-    private void startTimer(long millisInFuture, long countDownInterval) {
-
-        countDownTimer = new CountDownTimer(millisInFuture,countDownInterval) {
-            public void onTick(long millisUntilFinished) {
-                long secondRemaining = millisUntilFinished / 1000;
-                int minute = (int) (secondRemaining / 60);
-                int second = (int) (secondRemaining - (minute * 60));
-                timeUntilFinished=millisUntilFinished;
-                tv_Countdown.setText(String.format("%02d:%02d", minute, second));
-                pbTime.setMax(SETTING.getTimeBreak() * 60);
-                pbTime.setProgress((int) secondRemaining);
-            }
-
-            public void onFinish() {
-                tv_Countdown.setText(R.string.done);
-                tv_Countdown.setTextSize(60);
-                pbTime.setProgress(0);
-                pbTime.setVisibility(View.INVISIBLE);
-            }
-
-        };
-        countDownTimer.start();
+    @Subscribe
+    public void onTimerTick(TimerTickEvent event) {
+        if (event.getTick() == 0) {
+            pbTime.setText(getString(R.string.done));
+            return;
+        }
+        long millisUntilFinished = event.getTick();
+        long secondRemaining = millisUntilFinished / 1000;
+        int minute = (int) (secondRemaining / 60);
+        int second = (int) (secondRemaining - (minute * 60));
+        timeUntilFinished = millisUntilFinished;
+        pbTime.setText(String.format("%02d:%02d", minute, second));
+        pbTime.setMax(SETTING.getTimeBreak() * 60);
+        pbTime.setProgress((int) secondRemaining);
     }
 
 

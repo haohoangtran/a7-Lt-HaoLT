@@ -9,10 +9,9 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:layout_margin="16dp"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     tools:context="com.example.tranh.pomodoro.activities.TimerActivity">
-<com.example.tranh.pomodoro.utils.SquereLayout
+<com.example.tranh.pomodoro.utils.PSquereLayout
     android:layout_width="match_parent"
     android:layout_gravity="center"
     android:layout_height="wrap_content"
@@ -21,10 +20,14 @@
      android:id="@+id/pb_time"
      android:layout_width="match_parent"
      android:layout_height="match_parent" />
-</com.example.tranh.pomodoro.utils.SquereLayout>
+</com.example.tranh.pomodoro.utils.PSquereLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:layout_gravity="center_horizontal"
         android:orientation="horizontal">
         <ImageButton
@@ -44,4 +47,5 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </LinearLayout>
+    </RelativeLayout>
 </LinearLayout>

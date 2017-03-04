@@ -25,10 +25,15 @@ import com.example.tranh.pomodoro.adapters.ColorApdapter;
 import com.example.tranh.pomodoro.database.DbContext;
 import com.example.tranh.pomodoro.database.models.Task;
 import com.example.tranh.pomodoro.decorations.TaskColorDecoration;
+import com.example.tranh.pomodoro.evenbus_event.DataChange;
+import com.example.tranh.pomodoro.evenbus_event.TaskAction;
 import com.example.tranh.pomodoro.networks.NetContext;
 import com.example.tranh.pomodoro.networks.services.TaskActionService;
 import com.example.tranh.pomodoro.utils.TaskActionEnum;
 import com.example.tranh.pomodoro.utils.Util;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.UUID;
 
@@ -42,7 +47,7 @@ import retrofit2.Response;
  * A simple {@link Fragment} subclass.
  */
 public class TaskDetailFragment extends Fragment {
-    private final String TAG=TaskDetailFragment.class.toString();
+    private final String TAG = TaskDetailFragment.class.toString();
     private ColorApdapter colorApdapter;
     @BindView(R.id.rv_color)
     RecyclerView rv_color;
@@ -51,19 +56,15 @@ public class TaskDetailFragment extends Fragment {
     @BindView(R.id.ed_nametask)
     EditText et_nameTask;
     private String tittle;
-    public Task task;
+    private Task task;
     int count;
-    Datachange datachange;
     ProgressDialog dialog;
-    public interface Datachange{
-        void onDatachangerListener();
-    }
 
-    public void setDatachange(Datachange datachange) {
-        this.datachange = datachange;
-    }
+    String done;
+    String failed;
 
-    private final DbContext dbContext=new DbContext(getContext());
+
+    private final DbContext dbContext = new DbContext(getContext());
 
     public TaskActionEnum getTaskAction() {
         return taskAction;
@@ -96,16 +97,18 @@ public class TaskDetailFragment extends Fragment {
         setHasOptionsMenu(true);
     }
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-    }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         dialog = ProgressDialog.show(getContext(), getString(R.string.loadding),
                 getString(R.string.please_wait), true);
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 
     private void setupUI(View view) {
@@ -148,46 +151,41 @@ public class TaskDetailFragment extends Fragment {
             dialog.show();
             final String taskname = et_nameTask.getText().toString();
             final String payment = et_perTask.getText().toString();
-            float paymentPerHour=getPayment(payment);
+            float paymentPerHour = getPayment(payment);
             final String color = colorApdapter.getSelectColor();
-            final Task newTask = new Task(UUID.randomUUID().toString(),taskname, color, paymentPerHour,false);
+            final Task newTask = new Task(UUID.randomUUID().toString(), taskname, color, paymentPerHour, false);
             if (!taskname.isEmpty()) {
                 if (taskAction == TaskActionEnum.ADD_NEW) {
-                    TaskActionService addNewTask=NetContext.instance.create(TaskActionService.class);
+                    TaskActionService addNewTask = NetContext.instance.create(TaskActionService.class);
                     addNewTask.addNewTask(newTask).enqueue(new Callback<Task>() {
                         @Override
                         public void onResponse(Call<Task> call, Response<Task> response) {
-                            Log.e(TAG, String.format("onResponse: %s", response.body().toString()) );
-                            if (datachange!=null){
-                                datachange.onDatachangerListener();
-                                Toast.makeText(getContext(), getString(R.string.done), Toast.LENGTH_SHORT).show();
-                            }
+                            Log.e(TAG, String.format("onResponse: %s", response.body().toString()));
+                            EventBus.getDefault().post(new DataChange("Hoàn thành"));
                             dialog.dismiss();
                         }
+
                         @Override
                         public void onFailure(Call<Task> call, Throwable t) {
-                            Log.e(TAG, String.format("onFailure: %s", t.toString()) );
-                            Toast.makeText(getContext(), getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, String.format("onFailure: %s", t.toString()));
+                            EventBus.getDefault().post(new DataChange("Không thành công"));
                             dialog.dismiss();
                         }
                     });
                 }
                 if (taskAction == TaskActionEnum.EDIT) {
-                     TaskActionService editTask=NetContext.instance.create(TaskActionService.class);
-                    editTask.editTask(task.getId(),newTask).enqueue(new Callback<Void>() {
+                    TaskActionService editTask = NetContext.instance.create(TaskActionService.class);
+                    editTask.editTask(task.getId(), newTask).enqueue(new Callback<Void>() {
                         @Override
                         public void onResponse(Call<Void> call, Response<Void> response) {
-                            if (datachange!=null){
-                                datachange.onDatachangerListener();
-                                Toast.makeText(getContext(), getString(R.string.done), Toast.LENGTH_SHORT).show();
-                            }
+                            EventBus.getDefault().post(new DataChange("Hoàn thành"));
                             dialog.dismiss();
                         }
 
                         @Override
                         public void onFailure(Call<Void> call, Throwable t) {
                             Log.e(TAG, String.format("onFailure: %d %s", count, t.toString()));
-                            Toast.makeText(getContext(), getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
+                            EventBus.getDefault().post(new DataChange("Không thành công"));
                             dialog.dismiss();
                         }
                     });
@@ -199,7 +197,9 @@ public class TaskDetailFragment extends Fragment {
         }
         return false;
     }
-    public float getPayment(String payment){
+
+
+    public float getPayment(String payment) {
         float paymentPerHour;
         try {
             if (payment.isEmpty()) {

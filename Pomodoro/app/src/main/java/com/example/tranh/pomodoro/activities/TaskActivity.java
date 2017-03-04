@@ -19,17 +19,20 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.example.tranh.pomodoro.R;
-import com.example.tranh.pomodoro.database.DbContext;
+import com.example.tranh.pomodoro.fragments.FragmentChange;
 import com.example.tranh.pomodoro.fragments.TaskChangeListenner;
 import com.example.tranh.pomodoro.fragments.TaskFragment;
 import com.example.tranh.pomodoro.utils.Util;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import butterknife.BindDrawable;
 import butterknife.ButterKnife;
 
 public class TaskActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener
-        , TaskChangeListenner {
+{
     @BindDrawable(R.drawable.ic_arrow_back_white_24px)
     Drawable drawable;
     private static final String TAG = TaskActivity.class.toString();
@@ -39,9 +42,12 @@ public class TaskActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task);
+
+        EventBus.getDefault().register(this);
+
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -77,12 +83,17 @@ public class TaskActivity extends AppCompatActivity
         String user = bundle.getString("user", "nothing");
         name.setText(user.toUpperCase());
         TaskFragment taskFragment=new TaskFragment();
-        onTaskChangeListenner(taskFragment, false);
+        replaceFragment(taskFragment,false);
         ButterKnife.bind(this);
 
 
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
+    }
 
     @Override
     public void onBackPressed() {
@@ -93,6 +104,10 @@ public class TaskActivity extends AppCompatActivity
             super.onBackPressed();
         }
 
+    }
+    @Subscribe
+    public void onTaskChange(FragmentChange f){
+        replaceFragment(f.getFragment(),f.isAddtoBackStack());
     }
 
     @Override
@@ -158,9 +173,5 @@ public class TaskActivity extends AppCompatActivity
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
 
-    }
-    @Override
-    public void onTaskChangeListenner(Fragment f, boolean addtoBackStack) {
-        replaceFragment(f, addtoBackStack);
     }
 }

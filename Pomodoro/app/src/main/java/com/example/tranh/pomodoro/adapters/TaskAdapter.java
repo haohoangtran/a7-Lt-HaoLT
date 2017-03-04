@@ -15,11 +15,14 @@ import android.widget.CompoundButton;
 import android.widget.ImageButton;
 
 import com.example.tranh.pomodoro.R;
-import com.example.tranh.pomodoro.activities.TaskActivity;
 import com.example.tranh.pomodoro.activities.TimerActivity;
 import com.example.tranh.pomodoro.adapters.viewholders.TaskViewHolder;
-import com.example.tranh.pomodoro.database.DbContext;
 import com.example.tranh.pomodoro.database.models.Task;
+import com.example.tranh.pomodoro.evenbus_event.DataChange;
+import com.example.tranh.pomodoro.evenbus_event.TaskAction;
+import com.example.tranh.pomodoro.utils.TaskActionEnum;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
@@ -32,24 +35,9 @@ import static android.content.ContentValues.TAG;
 public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
     private List<Task> taskList;
 
-    public interface TaskItemClickListener {
-        void onItemClick(Task task);
-    }
-    public interface TaskItemClickDelete{
-
-        void onItemClick(Task task);
-    }
-    private TaskItemClickListener taskItemClickListener;
-    private TaskItemClickDelete taskItemClickDelete;
-
     public TaskAdapter(List<Task> list) {
-        taskList=list;
+        taskList = list;
     }
-    public interface Buttonclick{
-        void onClick();
-    }
-
-
 
     @Override
     public TaskViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -60,38 +48,32 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         return new TaskViewHolder(itemView);
     }
 
-    public void setTaskItemClickDelete(TaskItemClickDelete taskItemClickDelete) {
-        this.taskItemClickDelete = taskItemClickDelete;
-    }
-
-    public void setTaskItemClickListener(TaskItemClickListener taskItemClickListener1) {
-        this.taskItemClickListener = taskItemClickListener1;
-    }
 
     @Override
     public void onBindViewHolder(final TaskViewHolder holder, final int position) {
         //get data on position
         final Task task = taskList.get(position);
         //bind data into view
-        final ImageButton button= (ImageButton) holder.itemView.findViewById(R.id.ib_task);
+        final ImageButton button = (ImageButton) holder.itemView.findViewById(R.id.ib_task);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Context context=holder.itemView.getContext();
-                Intent intent=new Intent(context,TimerActivity.class);
+                Context context = holder.itemView.getContext();
+                Intent intent = new Intent(context, TimerActivity.class);
+                EventBus.getDefault().post(new TaskAction(task, TaskActionEnum.DEFAULT));
                 context.startActivity(intent);
             }
         });
-        final CheckBox checkBox= (CheckBox) holder.itemView.findViewById(R.id.cb_task_intasklist);
-        View view=holder.itemView.findViewById(R.id.v_color);
+        final CheckBox checkBox = (CheckBox) holder.itemView.findViewById(R.id.cb_task_intasklist);
+        View view = holder.itemView.findViewById(R.id.v_color);
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkBox.isChecked()){
+                if (checkBox.isChecked()) {
                     checkBox.setChecked(false);
 //                    task.setDone(false);
 
-                }else {
+                } else {
                     checkBox.setChecked(true);
 //                    task.setDone(true);
                 }
@@ -101,19 +83,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    // send event
-                    if (taskItemClickListener != null) {
-                        taskItemClickListener.onItemClick(task);
-                    }
-                }
+                // send event
+                EventBus.getDefault().post(new TaskAction(task,TaskActionEnum.EDIT));
+            }
         });
         holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (taskItemClickDelete!=null){
-                    taskItemClickDelete.onItemClick(task);
-
-                }
+                EventBus.getDefault().post(new TaskAction(task,TaskActionEnum.DELETE));
                 return false;
             }
         });

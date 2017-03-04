@@ -25,10 +25,14 @@ import com.example.tranh.pomodoro.activities.TimerActivity;
 import com.example.tranh.pomodoro.adapters.TaskAdapter;
 import com.example.tranh.pomodoro.database.DbContext;
 import com.example.tranh.pomodoro.database.models.Task;
+import com.example.tranh.pomodoro.evenbus_event.DataChange;
+import com.example.tranh.pomodoro.evenbus_event.TaskAction;
 import com.example.tranh.pomodoro.networks.NetContext;
 import com.example.tranh.pomodoro.networks.services.TaskActionService;
 import com.example.tranh.pomodoro.utils.TaskActionEnum;
-import com.example.tranh.pomodoro.utils.Util;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.List;
 
@@ -42,18 +46,18 @@ import retrofit2.Response;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick,TaskDetailFragment.Datachange{
+public class TaskFragment extends Fragment {
     private int count;
     private final int  MAX_REQUEST=5;
     private static final String TAG =TaskFragment.class.toString() ;
     @BindView(R.id.rv_task)
     RecyclerView rv_task;
-    TaskChangeListenner taskChangeListenner;
     private TaskAdapter taskAdapter;
     private  DbContext dbContext;
     ProgressDialog dialog;
 
     public TaskFragment() {
+
     }
     public void getAllTask() {
         dialog.show();
@@ -80,18 +84,21 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick,Ta
                 dialog.dismiss();
             }
         });
-
-
-
     }
 
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        taskChangeListenner= (TaskChangeListenner) getActivity();
+        EventBus.getDefault().register(this);
         dialog = ProgressDialog.show(getContext(), getString(R.string.loadding),
                 getString(R.string.please_wait), true);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -113,81 +120,66 @@ public class TaskFragment extends Fragment implements TaskAdapter.Buttonclick,Ta
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this.getContext(), DividerItemDecoration.VERTICAL);
         rv_task.addItemDecoration(dividerItemDecoration);
         setHasOptionsMenu(true);
-        taskAdapter.setTaskItemClickListener(new TaskAdapter.TaskItemClickListener() {
-            @Override
-            public void onItemClick(Task task) {
-                TaskDetailFragment taskDetailFragment=new TaskDetailFragment();
-                taskDetailFragment.setTittle(getString(R.string.edit));
-                taskDetailFragment.setTask(task);
-                taskDetailFragment.setTaskAction(TaskActionEnum.EDIT);
-                ((TaskActivity)getActivity()).replaceFragment(taskDetailFragment,true);
-            }
-        });
-        taskAdapter.setTaskItemClickDelete(new TaskAdapter.TaskItemClickDelete() {
-            @Override
-            public void onItemClick(final Task task) {
-                count=0;
-                Log.e(TAG, String.format("onItemClick: 1 %s", task.toString()) );
-                new AlertDialog.Builder(getContext())
-                        .setTitle(R.string.delete_title)
-                        .setMessage(R.string.delete_question)
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog1, final int which) {
-                                dialog.show();
-                               TaskActionService deleteTask=NetContext.instance.create(TaskActionService.class);
-                                deleteTask.deleteTask(task.getId()).enqueue(new Callback<Void>() {
-                                    @Override
-                                    public void onResponse(Call<Void> call, Response<Void> response) {
-                                        Log.e(TAG, String.format("onResponse: %s", task.toString()) );
-                                        dbContext.remove(task);
-                                        taskAdapter.notifyDataSetChanged();
-                                        Toast.makeText(getContext(), R.string.delete_complete, Toast.LENGTH_SHORT).show();
-                                        dialog.dismiss();
-                                    }
-
-                                    @Override
-                                    public void onFailure(Call<Void> call, Throwable t) {
-//                                        while (count++<MAX_REQUEST) {
-//                                            Toast.makeText(getContext(), String.format("Lỗi! Thử lại lần %d", count), Toast.LENGTH_SHORT).show();
-//                                            Util.enqueueWithRetry(call, this);
-//                                        }
-                                        Toast.makeText(getContext(), R.string.delete_failed, Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-
-                            }
-                        })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
-            }
-        });
     }
+    @Subscribe
+    public void onDeleteTask(TaskAction taskAction){
+        if (taskAction.getActionEnum()==TaskActionEnum.DELETE){
+            deleteTask(taskAction.getTask());
+        }
+        if (taskAction.getActionEnum()==TaskActionEnum.EDIT){
+
+            TaskDetailFragment taskDetailFragment = new TaskDetailFragment();
+            taskDetailFragment.setTittle(getString(R.string.edit));
+            taskDetailFragment.setTask(taskAction.getTask());
+            taskDetailFragment.setTaskAction(TaskActionEnum.EDIT);
+            EventBus.getDefault().post(new FragmentChange(taskDetailFragment,true));
+        }
+    }
+        public void deleteTask(final Task task){
+            new AlertDialog.Builder(getContext())
+                    .setTitle(R.string.delete_title)
+                    .setMessage(R.string.delete_question)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog1, final int which) {
+                            dialog.show();
+                            TaskActionService deleteTask=NetContext.instance.create(TaskActionService.class);
+                            deleteTask.deleteTask(task.getId()).enqueue(new Callback<Void>() {
+                                @Override
+                                public void onResponse(Call<Void> call, Response<Void> response) {
+                                    Log.e(TAG, String.format("onResponse: %s", task.toString()) );
+                                    dbContext.remove(task);
+                                    taskAdapter.notifyDataSetChanged();
+                                    Toast.makeText(getContext(), R.string.delete_complete, Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
+                                }
+
+                                @Override
+                                public void onFailure(Call<Void> call, Throwable t) {
+                                    Toast.makeText(getContext(), R.string.delete_failed, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        }
 
     @OnClick(R.id.fab)
     void onFabClick() {
         TaskDetailFragment taskDetailFragment = new TaskDetailFragment();
         taskDetailFragment.setTittle(getString(R.string.task_detail));
         taskDetailFragment.setTaskAction(TaskActionEnum.ADD_NEW);
-        taskChangeListenner.onTaskChangeListenner(taskDetailFragment,true);
+        EventBus.getDefault().post(new FragmentChange(taskDetailFragment,true));
     }
-
-
-    @Override
-    public void onClick() {
-        Intent intent=new Intent(getContext(),TimerActivity.class);
-        startActivity(intent);
-    }
-
-    @Override
-    public void onDatachangerListener() {
-        taskAdapter.notifyDataSetChanged();
-        List<Task> tasks1=dbContext.allPersions();
-        for (int i = 0; i < tasks1.size(); i++) {
-            Log.e(TAG, String.format("onDatachangerListener: %s", tasks1.get(i).toString()) );
-        }
+    @Subscribe
+    public void onDatachange(DataChange dataChange){
+        getAllTask();
+        Log.e(TAG, "onDatachange: datachange" );
+        Toast.makeText(getContext(), dataChange.getToastNotification(), Toast.LENGTH_SHORT).show();
     }
 }

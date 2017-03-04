@@ -5,6 +5,7 @@ package com.example.tranh.pomodoro.utils;
  */
 
 public enum TaskActionEnum {
+    DEFAULT,
     ADD_NEW,
     EDIT,
     DELETE
