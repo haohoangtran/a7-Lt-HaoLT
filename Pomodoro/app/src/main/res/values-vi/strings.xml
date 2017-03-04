@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pô mô đô rô</string>
+    <string name="action_settings">Cài đặt</string>
+    <string name="password">Mật khẩu</string>
+    <string name="register">Đăng ký</string>
+    <string name="user_name">Tên đăng nhập</string>
+    <string name="login">Đăng nhập</string>
+    <string name="work_time_25_min">Thời gian làm việc %s phút</string>
+    <string name="title_activity_task">Công việc</string>
+    <string name="long_break_20_min">Nghỉ sau %s phút</string>
+    <string name="break_10_mins">Nghỉ %s phút</string>
+    <string name="long_break_affter">Nghỉ dài sau</string>
+    <string name="breaks">lần nghỉ ngắn</string>
+    <string name="restore_defaults">Khôi phục mặc định</string>
+    <string name="user_name_too_sort">Tên đăng nhập trống</string>
+    <string name="password_too_sort">Mật khẩu cần trên 8 kí tự</string>
+    <string name="wait_title">Đăng nhập vào Pomodoro</string>
+    <string name="wait_mes">Đăng nhập</string>
+    <string name="name">Tên</string>
+    <string name="ok">Ok</string>
+    <string name="payment_per_secs">$ mỗi giây</string>
+    <string name="task_detail">Thêm mới</string>
+    <string name="edit">Sửa</string>
+    <string name="done">Hoàn Thành</string>
+    <string name="second">giây</string>
+    <string name="name_not_empty">Tên không được để trống</string>
+    <string name="loadding">Đang tải</string>
+    <string name="no_internet">Không có kết nối internet, thử lại sau</string>
+    <string name="timer">Thời gian</string>
+    <string name="delete_complete">Xóa thành công!</string>
+    <string name="delete_failed">Xóa không thành công, kiểm tra kết nối internet</string>
+    <string name="delete_question">Xóa task này?</string>
+    <string name="delete_title">Xóa</string>
+</resources>
